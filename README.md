@@ -170,7 +170,6 @@ Le message envoyé périodiquement devra respecter la structure JSON définie da
 | `timestamp` | String | Date et heure d'émission du message au format ISO 8601 |
 
 > [!NOTE]
-> L'adresse IP `192.168.1.2` est utilisée à titre d'exemple afin de respecter le sous-réseau imposé `192.168.1.0/28`.
 > L'identifiant et l'adresse IP devront être propres à chaque carte.
 > L'horodatage présenté est un exemple. Sa gestion définitive sera réalisée lors de l'intégration de la RTC et de la synchronisation NTP.
 
