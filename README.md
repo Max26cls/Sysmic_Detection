@@ -1,0 +1,1 @@
+# Project_-C_Sysmic_Detection_FreeRTOS_F767ZI
