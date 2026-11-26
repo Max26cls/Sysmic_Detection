@@ -33,7 +33,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define SYSTEME_EN_MARCHE 1U // Bit 0 du groupe de drapeaux etatSysteme.
+#define SYSTEME_EN_MARCHE 1U
+#define ADC_NB_VOIES      3U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -95,11 +96,13 @@ const osThreadAttr_t debugTask_attributes = {
 };
 /* USER CODE BEGIN PV */
 
-// Référence au groupe de drapeaux qui partage l'état marche/arrêt entre les tâches.
 static osEventFlagsId_t etatSysteme;
-
-// Sémaphore déclenché par l'interruption du bouton poussoir.
 static osSemaphoreId_t btnSem;
+static uint16_t adcBuffer[ADC_NB_VOIES];
+static volatile uint8_t dmaConvComplete = 0U;
+static volatile uint16_t dernierAx = 0U;
+static volatile uint16_t dernierAy = 0U;
+static volatile uint16_t dernierAz = 0U;
 
 /* USER CODE END PV */
 
@@ -565,6 +568,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin == USER_Btn_Pin && btnSem != NULL)
@@ -572,6 +576,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		osSemaphoreRelease(btnSem);
 	}
 }
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+	if (hadc->Instance == ADC1)
+	{
+		dmaConvComplete = 1U;
+	}
+}
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -605,21 +618,21 @@ void StartMasterTask(void *argument)
 {
 	/* USER CODE BEGIN StartMasterTask */
 	for (;;)
-	  {
-	    if (osSemaphoreAcquire(btnSem, osWaitForever) == osOK)
-	    {
-	      if ((osEventFlagsGet(etatSysteme) & SYSTEME_EN_MARCHE) == 0)
-	      {
-	        osEventFlagsSet(etatSysteme, SYSTEME_EN_MARCHE);
-	        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-	      }
-	      else
-	      {
-	        osEventFlagsClear(etatSysteme, SYSTEME_EN_MARCHE);
-	        HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
-	      }
-	    }
-	  }
+	{
+		if (osSemaphoreAcquire(btnSem, osWaitForever) == osOK)
+		{
+			if ((osEventFlagsGet(etatSysteme) & SYSTEME_EN_MARCHE) == 0)
+			{
+				osEventFlagsSet(etatSysteme, SYSTEME_EN_MARCHE);
+				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+			}
+			else
+			{
+				osEventFlagsClear(etatSysteme, SYSTEME_EN_MARCHE);
+				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
+			}
+		}
+	}
 	/* USER CODE END StartMasterTask */
 }
 
@@ -633,16 +646,41 @@ void StartMasterTask(void *argument)
 void StartAquisitionTask(void *argument)
 {
 	/* USER CODE BEGIN StartAquisitionTask */
+	uint8_t dmaActif = 0U;
+
 	for (;;)
 	{
-
 		osEventFlagsWait(etatSysteme, SYSTEME_EN_MARCHE, osFlagsWaitAny | osFlagsNoClear, osWaitForever);
 
-		osDelay(1); // Emplacement temporaire pour le futur code ADC/DMA.
+		if (dmaActif == 0U)
+		{
+			dmaConvComplete = 0U;
+			if (HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adcBuffer, ADC_NB_VOIES) == HAL_OK)
+			{
+				HAL_TIM_Base_Start(&htim2);
+				dmaActif = 1U;
+			}
+		}
 
+		while ((osEventFlagsGet(etatSysteme) & SYSTEME_EN_MARCHE) != 0U)
+		{
+			if (dmaConvComplete != 0U)
+			{
+				dmaConvComplete = 0U;
+				dernierAx = adcBuffer[0];
+				dernierAy = adcBuffer[1];
+				dernierAz = adcBuffer[2];
+			}
+			osDelay(5);
+		}
+
+		if (dmaActif != 0U)
+		{
+			HAL_TIM_Base_Stop(&htim2);
+			HAL_ADC_Stop_DMA(&hadc1);
+			dmaActif = 0U;
+		}
 	}
-	/* Infinite loop */
-
 	/* USER CODE END StartAquisitionTask */
 }
 
