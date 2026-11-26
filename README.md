@@ -88,7 +88,7 @@ La période du heartbeat sera configurable afin de pouvoir être modifiée facil
 
 ---
 
-### 4. Tâche Debug (DebugTask) — À confirmer
+### 4. Tâche Debug (DebugTask)
 
 La tâche Debug aurait pour objectif de centraliser les messages
 de diagnostic provenant des différentes tâches du système
