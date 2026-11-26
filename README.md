@@ -446,8 +446,6 @@ La tâche Broadcast dispose actuellement d'une stack plus importante en raison d
 
 > [!NOTE]
 > Les tailles des stacks et les priorités constituent une configuration initiale. Elles pourront être ajustées après analyse du comportement réel du programme.
->
-> La conservation de la tâche Debug reste à confirmer avec l'enseignant.
 
 #### Configuration des fonctions FreeRTOS
 
