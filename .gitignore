@@ -1,0 +1,18 @@
+# Sorties générées par STM32CubeIDE
+[Dd]ebug/
+[Rr]elease/
+*.o
+*.d
+*.elf
+*.hex
+*.bin
+*.map
+*.su
+*.cyclo
+*.list
+
+# Réglages locaux de l'IDE et fichiers système
+.metadata/
+*.launch
+.DS_Store
+Thumbs.db
