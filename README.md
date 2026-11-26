@@ -140,7 +140,7 @@ La communication reposera sur le protocole UDP et sur l'utilisation de la biblio
 |---|---|
 | Réseau | `192.168.1.0/28` |
 | Masque | `255.255.255.240` |
-| Adresse IP | Statique et unique par carte |
+| Adresse IP | `192.168.1.7` |
 | Adresse broadcast | `192.168.1.15` |
 | Protocole | UDP |
 | Port | `12345` |
